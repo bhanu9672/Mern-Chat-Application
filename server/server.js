@@ -4,17 +4,26 @@ import cors from "cors"
 import http from "http"
 import { connectDB } from "./lib/database.js";
 import userRouter from "./routes/userRoutes.js";
+import messageRouter from "./routes/messageRoutes.js";
+import { Server } from "socket.io"
 
 // create Expresss App & HTTP Server
 const app = express()
 const server = http.createServer(app)
 
+// Initialize Socket.io Server
+export const io = new Server( Server, {
+    cors: { origin : "*" }
+} )
+
 // Setup Middleware 
 app.use(express.json({ limit: "4mb" }))
 app.use(cors())
 
+// Routes Setup 
 app.use("/api/status", (req, res) => res.send("Server is Live"))
 app.use("/api/auth", userRouter)
+app.use("/api/messages", messageRouter)
 
 // Connected With MongoDb Database
 await connectDB()
