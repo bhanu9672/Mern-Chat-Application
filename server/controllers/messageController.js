@@ -1,37 +1,36 @@
-import Message from "../models/Message";
-import User from "../models/User";
-import cloudinary from "../lib/cloudinary"
+import Message from "../models/Message.js";
+import User from "../models/User.js";
+import cloudinary from "../lib/cloudinary.js";
+import { io, userSocketMap } from "../server.js"
 
 // Get All Users Except The Logged In User
 export const getUsersForSidebar = async (req, res) => {
     try {
-        const userId = req.user_id;
-        const filteredUsers = await UserActivation.find({ _id: { $ne: userId } }).select("-password");
+        const userId = req.user._id;
+        const filteredUsers = await User.find({ _id: { $ne: userId } }).select("-password");
+        const unseenMessages = {};
 
-        // Count Numbers of Messages not Seen
-        const unseenMessages = {}
         const promises = filteredUsers.map(async (user) => {
             const messages = await Message.find({
                 senderId: user._id,
                 receiverId: userId,
                 seen: false
-            })
+            });
             if (messages.length > 0) {
                 unseenMessages[user._id] = messages.length;
             }
-        })
-        await Promise.all(promises)
+        });
+
+        await Promise.all(promises);
+
         res.json({
             success: true,
             users: filteredUsers,
             unseenMessages
-        })
+        });
     } catch (error) {
-        console.log(error.Message);
-        res.json({
-            success: false,
-            message: error.Message
-        })
+        console.log(error.message);
+        res.json({ success: false, message: error.message });
     }
 }
 
@@ -99,7 +98,7 @@ export const sendMessage = async (req, res) => {
 
         let imageUrl;
         if( image ) {
-            const cloudinary = await cloudinary.uploader.upload(image)
+            const uploadResponse = await cloudinary.uploader.upload(image);
             imageUrl = uploadResponse.secure_url;
         }
 
@@ -109,6 +108,12 @@ export const sendMessage = async (req, res) => {
             text,
             image: imageUrl
         })
+
+        // Emit The New Message To THe Recivier's Socket
+        const receiverSocketId = userSocketMap[receiverId]
+        if( receiverSocketId ) {
+            io.to(receiverSocketId).emit("newMessage", newMessage)
+        }
 
         res.json({ success: true, newMessage })
 

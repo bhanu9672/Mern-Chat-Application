@@ -1,21 +1,25 @@
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import assets from '../assets/assets'
+import { AuthContext } from '../../context/AuthContext';
 
 function Login() {
 
 	const [currState, setCurrState] = useState("Sing up");
-	const [fullName, setFullName] = useState("");
+	const [fullname, setFullName] = useState("");
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [bio, setBio] = useState("");
 	const [isDataSubmitted, SetIsDataSubmitted] = useState(false);
 
+	const { login } = useContext(AuthContext)
+
 	const onSubmitHandler = (e) => {
 		e.preventDefault();
-		if( currState === "Sing up" && !isDataSubmitted ) {
+		if (currState === "Sing up" && !isDataSubmitted) {
 			SetIsDataSubmitted(true)
 			return;
 		}
+		login(currState === "Sing up" ? "signup" : "login", { fullname, email, password, bio })
 	}
 
 	return (
@@ -27,13 +31,18 @@ function Login() {
 
 			{/* ------------------- Right Area ----------------- */}
 			<form
-			onSubmit={ onSubmitHandler }
+				onSubmit={onSubmitHandler}
 				className='border-2 bg-white/8 text-white border-gray-500 p-6 flex flex-col gap-6 rounded-lg shadow-lg'
 			>
 				<h2 className='font-medium text-2xl flex justify-between items-center'>
 					{currState}
 					{
-						isDataSubmitted && <img onClick={ () => SetIsDataSubmitted(false) } src={assets.arrow_icon} alt='' className='w-5 cursor-pointer' />
+						isDataSubmitted &&
+						<img
+							onClick={() => SetIsDataSubmitted(false)}
+							src={assets.arrow_icon}
+							alt=''
+							className='w-5 cursor-pointer' />
 					}
 
 				</h2>
@@ -41,7 +50,7 @@ function Login() {
 				{currState === "Sing up" && !isDataSubmitted && (
 					<input
 						onChange={(e) => setFullName(e.target.value)}
-						value={fullName}
+						value={fullname}
 						type='text'
 						className='p-2 border border-gray-500 rounded-md focus:outline-none'
 						placeholder='Full Name'
@@ -97,9 +106,10 @@ function Login() {
 				<div className='flex flex-col gap-2'>
 					{currState === 'Sing up' ? (
 						<p className='text-sm text-gray-600'>
-							Already have a Account 
+							Already have a Account
 							<span
-								onClick={() => { setCurrState("login"); SetIsDataSubmitted(false) }} className='px-2 font-medium text-violet-500 cursor-pointer'
+								onClick={() => { setCurrState("login"); SetIsDataSubmitted(false) }} 
+								className='px-2 font-medium text-violet-500 cursor-pointer'
 							> Login Here </span>
 						</p>
 					) : (
@@ -118,4 +128,4 @@ function Login() {
 	)
 }
 
-export default Login
+export default Login;
